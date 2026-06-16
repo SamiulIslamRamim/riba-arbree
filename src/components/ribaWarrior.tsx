@@ -664,18 +664,18 @@ export default function RibaWarriorScore() {
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-50 items-center z-5 font-jakarta ">
                 <div className="lg:min-w-120">
-                  <h1 className="text-2xl md:text-[64px] md:text-5xl font-extrabold tracking-tight text-black">
+                  <h1 className="text-3xl  md:text-5xl font-extrabold tracking-tight text-black">
                     Understand your{" "}
                     <span className="text-emerald-600 ">Riba Warrior</span>{" "}
                     Score
                   </h1>
-                  <p className="mt-4 text-xs md:text-lg opacity-80 text-black">
+                  <p className="mt-4 text-sm md:text-lg opacity-80 text-black">
                     See your exposure today, learn what it means, and get
                     practical steps to reduce it — in{" "}
                     <span className="text-emerald-600 ">3 minutes</span>, 4
                     simple blocks, no email required.
                   </p>
-                  <p className="mt-3 text-xs md:text-lg opacity-70 text-black">
+                  <p className="mt-3 text-sm md:text-lg opacity-70 text-black">
                     Designed with compassion. Mostly Yes/No questions. Optional
                     amounts never affect your score.
                   </p>
