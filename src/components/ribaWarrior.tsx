@@ -502,6 +502,7 @@ export default function RibaWarriorScore() {
     setSel({});
     setStage(1);
     setView("home");
+    window.location.reload();
   };
 
   // --- reusable components ---
