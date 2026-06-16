@@ -499,9 +499,9 @@ export default function RibaWarriorScore() {
 
   // --- reset function ---
   const resetTest = () => {
-    setSel({});
-    setStage(1);
-    setView("home");
+    // setSel({});
+    // setStage(1);
+    // setView("home");
     window.location.reload();
   };
 
