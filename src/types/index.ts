@@ -1,2 +1,2 @@
-export type ViewType = "home" | "test" | "results";
+export type ViewType = "home" | "preTest" | "test" | "results";
 export type Selection = Record<string, string>;

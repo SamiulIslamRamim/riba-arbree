@@ -21,7 +21,7 @@ export default function Home() {
         <RibaWarriorScore />
       </main>
       {/* FOOTER */}
-      <footer className="flex items-center justify-center border-t border-slate-200 pt-5 bg-white text-black font-semibold">
+      <footer className="flex items-center justify-center border-t border-slate-200 pt-5 bg-white dark:bg-slate-900 text-black dark:text-white font-semibold">
         <div className="max-w-6xl mx-auto px-4 text-sm opacity-80 py-5">
           © {new Date().getFullYear()} Riba Free Foundation •{" "}
           <a

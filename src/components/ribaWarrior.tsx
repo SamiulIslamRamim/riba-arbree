@@ -5,11 +5,15 @@ import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import bgImg from "@/lib/fBG.png";
 import { Menu, X } from "lucide-react";
+import { ThemeToggleSwitch } from "./toggleSwitch";
 
 export default function RibaWarriorScore() {
   // --- UI routing ---
   const [view, setView] = useState<ViewType>("home");
   const [stage, setStage] = useState(1); // 1..4 (5th is results)
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [dark, setDark] = useState(false);
 
   // --- selections / answers ---
   const [sel, setSel] = useState<Selection>({
@@ -31,6 +35,15 @@ export default function RibaWarriorScore() {
   const heroRef = useRef<HTMLCanvasElement | null>(null);
   const resultRef = useRef<HTMLCanvasElement | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  // --- theme toggle ---
+  useEffect(() => {
+    const root = document.documentElement;
+    if (dark) root.classList.add("dark");
+    else root.classList.remove("dark");
+    // redraw hero donut when theme flips
+    drawHero();
+  }, [dark]);
+
   // --- draw hero donut (full ring, 1000 + RibaWarrior) ---
   const drawHero = () => {
     const c = heroRef.current;
@@ -43,7 +56,6 @@ export default function RibaWarriorScore() {
       cy = h / 2,
       r = Math.min(cx, cy) - 20;
     ctx.clearRect(0, 0, w, h);
-
     const gradient = ctx.createLinearGradient(w, 0, 0, h);
     gradient.addColorStop(0, "#fafafa"); // Light teal/white highlight at top-right
     gradient.addColorStop(0.3, "#bceece"); // Bright green transitioning down
@@ -53,19 +65,18 @@ export default function RibaWarriorScore() {
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.fillStyle = "#017d4a"; // slate-900
+    // slate-200 / slate-900
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font =
-      "800 64px Manrope, system-ui, font-jakarta, font-extrabold, leading-none";
+      "800 64px Manrope, system-ui, font-jakarta, font-extrabold, leading-none text-bgdrop";
+    ctx.fillStyle = "#308865";
     ctx.fillText("1000", cx, cy - 24);
     ctx.fillStyle = "#0f172a";
     ctx.font = "700 36px Inter, system-ui, font-jakarta";
     ctx.fillText("RibaWarrior", cx, cy + 34);
   };
-  useEffect(() => {
-    drawHero();
-  }, []);
+  useEffect(drawHero, [dark]);
 
   // --- helper: set selection in groups ---
   const setChoice = (group: string, value: string) => {
@@ -216,7 +227,7 @@ export default function RibaWarriorScore() {
     ctx.clearRect(0, 0, w, h);
     ctx.lineWidth = 22;
     // base track
-    ctx.strokeStyle = "#e2e8f0";
+    ctx.strokeStyle = dark ? "#334155" : "#e2e8f0";
     ctx.beginPath();
     ctx.arc(cx, cy, r, Math.PI, 0);
     ctx.stroke();
@@ -227,13 +238,13 @@ export default function RibaWarriorScore() {
     ctx.arc(cx, cy, r, Math.PI, Math.PI + (results.score / 1000) * Math.PI);
     ctx.stroke();
     // text
-    ctx.fillStyle = "#0f172a";
+    ctx.fillStyle = dark ? "#e2e8f0" : "#0f172a";
     ctx.textAlign = "center";
     ctx.font = "700 36px Manrope, system-ui, sans-serif";
     ctx.fillText(String(results.score), cx, cy - r / 2);
     ctx.font = "600 14px Inter, system-ui, sans-serif";
     ctx.fillText(band.name, cx, cy - r / 2 + 26);
-  }, [view, results]);
+  }, [view, results, dark]);
 
   // --- advice generation ---
   const adviceBundle = useMemo(() => {
@@ -420,6 +431,8 @@ export default function RibaWarriorScore() {
   // --- collect all answers including optional amounts ---
   const allData = () => ({
     gender: sel.gender,
+    name: userName,
+    email: userEmail,
     ageBand: sel.ageBand,
     employment: sel.employment,
     household: sel.household,
@@ -493,7 +506,7 @@ export default function RibaWarriorScore() {
 
   // --- reusable components ---
   const Chip = ({ children }: { children: React.ReactNode }) => (
-    <span className="chip ml-2 rounded-full px-2 py-0.5 text-[0.85rem] font-semibold bg-emerald-100 text-emerald-900">
+    <span className="chip ml-2 rounded-full px-2 py-0.5 text-[0.85rem] font-semibold bg-emerald-100 text-emerald-900 dark:bg-emerald-700 dark:text-white">
       {children}
     </span>
   );
@@ -513,7 +526,7 @@ export default function RibaWarriorScore() {
           <button
             key={o.value}
             type="button"
-            className={`px-3 py-2 rounded border ${sel[group] === o.value ? "bg-emerald-600 text-white border-emerald-700" : "border-slate-300"}`}
+            className={`px-3 py-2 rounded border ${sel[group] === o.value ? "bg-emerald-600 text-white border-emerald-700" : "border-slate-300 dark:border-slate-700"}`}
             data-checked={sel[group] === o.value}
             onClick={() => setChoice(group, o.value)}
           >
@@ -539,7 +552,7 @@ export default function RibaWarriorScore() {
   );
 
   return (
-    <div className="bg-white text-slate-900 min-h-screen">
+    <div className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 min-h-screen">
       <Head>
         <title>RibaWarrior Score - Riba Free Foundation</title>
         <meta
@@ -549,7 +562,7 @@ export default function RibaWarriorScore() {
       </Head>
 
       {/* NAV */}
-      <header className="sticky top-0 z-30 backdrop-blur bg-white/60 border-b border-slate-200/50">
+      <header className="sticky top-0 z-30 backdrop-blur bg-white/60 dark:bg-slate-900/80 border-b border-slate-200/50 dark:border-slate-800">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-5 font-jakarta font-medium text-base leading-none">
           <a
             href="https://www.ribafree.org.uk"
@@ -568,13 +581,13 @@ export default function RibaWarriorScore() {
           <nav className="hidden md:flex items-center gap-4 md:gap-10 lg:gap-15">
             <button
               onClick={() => setShowHow(true)}
-              className="hover:underline"
+              className="font-semibold hover:underline"
             >
               How it works
             </button>
             <button
               onClick={() => setShowPrivacy(true)}
-              className="hover:underline"
+              className="font-semibold hover:underline"
             >
               Privacy
             </button>
@@ -582,52 +595,57 @@ export default function RibaWarriorScore() {
               href="https://www.ribafree.org.uk"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:underline"
+              className="font-semibold hover:underline"
             >
               Main site
             </a>
           </nav>
-
+          <ThemeToggleSwitch dark={dark} setDark={setDark} />
+          {/* <button onClick={() => setDark((d) => !d)} className="ml-2 text-sm px-3 py-1 rounded bg-slate-200 dark:bg-slate-800">
+              Toggle theme
+            </button> */}
           {/* Mobile Hamburger */}
           <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="inline-flex items-center justify-center rounded-md p-2 text-background hover:bg-accent md:hidden"
-          aria-label="Toggle menu"
-        >
-          {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="inline-flex items-center justify-center rounded-md p-2 text-background hover:bg-accent md:hidden"
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
         </div>
-
 
         {/* Mobile Dropdown */}
-      {mobileOpen && (
-        <div className="border-t bg-foreground/95 backdrop-blur md:hidden">
-          <nav className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4">
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="w-full rounded-md px-3 py-2.5 text-left text-sm font-medium text-background transition-colors hover:bg-accent"
-            >
-              How it works
-            </button>
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="w-full rounded-md px-3 py-2.5 text-left text-sm font-medium text-background transition-colors hover:bg-accent"
-            >
-              Privacy
-            </button>
-            <a
-              href="https://www.ribafree.org.uk"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-md px-3 py-2.5 text-sm font-medium text-background transition-colors hover:bg-accent"
-              onClick={() => setMobileOpen(false)}
-            >
-              Main site
-            </a>
-          </nav>
-        </div>
-      )}
-      
+        {mobileOpen && (
+          <div className="border-t bg-foreground/95 backdrop-blur md:hidden font-jakarta">
+            <nav className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4">
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="w-full rounded-md px-3 py-2.5 text-left text-sm font-medium text-background transition-colors hover:bg-accent"
+              >
+                How it works
+              </button>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="w-full rounded-md px-3 py-2.5 text-left text-sm font-medium text-background transition-colors hover:bg-accent"
+              >
+                Privacy
+              </button>
+              <a
+                href="https://www.ribafree.org.uk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-md px-3 py-2.5 text-sm font-medium text-background transition-colors hover:bg-accent"
+                onClick={() => setMobileOpen(false)}
+              >
+                Main site
+              </a>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* HOME */}
@@ -645,24 +663,25 @@ export default function RibaWarriorScore() {
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-50 items-center z-5 font-jakarta ">
                 <div className="lg:min-w-120">
-                  <h1 className="text-2xl md:text-[64px] md:text-5xl font-extrabold tracking-tight">
+                  <h1 className="text-2xl md:text-[64px] md:text-5xl font-extrabold tracking-tight text-black">
                     Understand your{" "}
-                    <span className="text-emerald-600 ">Riba Warrior</span> Score
+                    <span className="text-emerald-600 ">Riba Warrior</span>{" "}
+                    Score
                   </h1>
-                  <p className="mt-4 text-xs md:text-lg opacity-80">
+                  <p className="mt-4 text-xs md:text-lg opacity-80 text-black">
                     See your exposure today, learn what it means, and get
                     practical steps to reduce it — in{" "}
                     <span className="text-emerald-600 ">3 minutes</span>, 4
                     simple blocks, no email required.
                   </p>
-                  <p className="mt-3 text-xs md:text-lg opacity-70">
+                  <p className="mt-3 text-xs md:text-lg opacity-70 text-black">
                     Designed with compassion. Mostly Yes/No questions. Optional
                     amounts never affect your score.
                   </p>
                   <div className="mt-6 flex gap-3">
                     <button
-                      onClick={() => {
-                        setView("test");
+                      onClick={() => { // Changed to preTest view
+                        setView("preTest");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
                       className="px-5 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700"
@@ -671,7 +690,7 @@ export default function RibaWarriorScore() {
                     </button>
                     <button
                       onClick={() => setShowHow(true)}
-                      className="px-5 py-1.5 rounded-lg border border-slate-300 font-semibold"
+                      className="px-5 py-1.5 rounded-lg border border-slate-700 font-semibold text-black"
                     >
                       How it works
                     </button>
@@ -692,7 +711,7 @@ export default function RibaWarriorScore() {
 
           {/* Video, half-height with overlay */}
           <section id="homeVideo" className="max-w-6xl mx-auto px-4 mt-20">
-            <div className="card p-4 bg-white">
+            <div className="card p-4 bg-white dark:bg-slate-800">
               <h2 className="text-3xl font-semibold leading-none text-center mb-8 font-jakarta">
                 Watch: Why the RibaWarrior Score matters
               </h2>
@@ -736,6 +755,63 @@ export default function RibaWarriorScore() {
         </>
       )}
 
+      {/* PRE-TEST VIEW */}
+      {view === "preTest" && (
+        <section id="preTest" className="max-w-md mx-auto px-4 pb-24 pt-15 font-jakarta ">
+          <div className="card p-6 bg-white dark:bg-slate-800">
+            <h2 className="text-2xl font-extrabold mb-4 text-center">RibaWarrior Test</h2>
+            <p className="text-sm opacity-80 mb-4 text-center">
+              Help us understand you better so we can calculate your Riba exposure and guide you towards a Riba free life. 
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="name" className="block text-sm font-semibold mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="Your Name"
+                  required
+                  className="w-full rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-semibold mb-1">
+                  Email 
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  placeholder="your.email@example.com"
+                  required
+                  className="w-full rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
+                />
+              </div>
+            </div>
+            <div className="mt-10 flex justify-center">
+              <button
+                onClick={() => { // Validate name and email before proceeding
+                  if (!userName.trim() || !userEmail.trim()) {
+                    alert("Please enter your full name and email to continue.");
+                    return;
+                  }
+                  setView("test");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="px-10 md:px-20 py-3 rounded-lg bg-emerald-600 text-white font-semibold"
+              >
+                Continue to Test
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* TEST */}
       {view === "test" && (
         <section id="test" className="max-w-4xl mx-auto px-4 pb-24 pt-15">
@@ -744,7 +820,7 @@ export default function RibaWarriorScore() {
           {/* Progress */}
           <div className="mb-6 flex items-center gap-2 text-sm">
             <div className="font-semibold">Stage {stage} of 5</div>
-            <div className="h-2 flex-1 bg-slate-200 rounded">
+            <div className="h-2 flex-1 bg-slate-200 dark:bg-slate-800 rounded">
               <div
                 className="h-2 bg-emerald-600 rounded"
                 style={{ width: `${(stage / 5) * 100}%` }}
@@ -754,10 +830,10 @@ export default function RibaWarriorScore() {
 
           {/* STAGE 1 */}
           {stage === 1 && (
-            <div className="card p-6 bg-white">
+            <div className="card p-6 bg-white dark:bg-slate-800">
               <h3 className="text-xl font-bold mb-4">Block 1 — About You</h3>
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="p-4 rounded bg-emerald-50/40">
+                <div className="p-4 rounded bg-emerald-50/40 dark:bg-emerald-900/20">
                   <Group
                     label="Gender*"
                     group="gender"
@@ -767,7 +843,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                 </div>
-                <div className="p-4 rounded bg-emerald-100/30">
+                <div className="p-4 rounded bg-emerald-100/30 dark:bg-emerald-900/30">
                   <Group
                     label="Age band*"
                     group="ageBand"
@@ -781,7 +857,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                 </div>
-                <div className="p-4 rounded bg-emerald-50/40">
+                <div className="p-4 rounded bg-emerald-50/40 dark:bg-emerald-900/20">
                   <Group
                     label="Employment status*"
                     group="employment"
@@ -797,7 +873,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                 </div>
-                <div className="p-4 rounded bg-emerald-100/30">
+                <div className="p-4 rounded bg-emerald-100/30 dark:bg-emerald-900/30">
                   <Group
                     label="Household type*"
                     group="household"
@@ -811,14 +887,14 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                 </div>
-                <div className="p-4 rounded bg-emerald-50/40 md:col-span-2">
+                <div className="p-4 rounded bg-emerald-50/40 dark:bg-emerald-900/20 md:col-span-2">
                   <label className="block text-sm font-semibold mb-2">
                     Country*
                   </label>
                   <select
                     value={sel.country ?? ""}
                     onChange={(e) => setChoice("country", e.target.value)}
-                    className="w-full rounded border p-2 bg-white border-slate-300"
+                    className="w-full rounded border p-2 bg-white border-slate-300 dark:bg-slate-900 dark:border-slate-700"
                   >
                     <option value="">Select</option>
                     <option value="GB">United Kingdom (GB)</option>
@@ -861,13 +937,13 @@ export default function RibaWarriorScore() {
 
           {/* STAGE 2 */}
           {stage === 2 && (
-            <div className="card p-6 bg-white">
+            <div className="card p-6 bg-white dark:bg-slate-800">
               <h3 className="text-xl font-bold mb-4">
                 Block 2 — Regulated / Need‑based
               </h3>
               <div className="space-y-4">
                 {/* Pension */}
-                <div className="p-4 rounded bg-emerald-50/40">
+                <div className="p-4 rounded bg-emerald-50/40 dark:bg-emerald-900/20">
                   <Group
                     label="Do you contribute to a pension / retirement fund?"
                     group="pension"
@@ -877,7 +953,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                   {isYes("pension") && (
-                    <div className="mt-2 p-3 rounded border border-slate-300">
+                    <div className="mt-2 p-3 rounded border dark:border-slate-700">
                       <Group
                         label="Is it Sharia‑compliant?"
                         group="pensionSharia"
@@ -888,7 +964,7 @@ export default function RibaWarriorScore() {
                       />
                       <input
                         placeholder="Optional amount (£)"
-                        className="mt-2 w-full rounded border p-2 border-slate-300"
+                        className="mt-2 w-full rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
                         value={sel["pensionAmt"] ?? ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setChoice("pensionAmt", e.target.value)
@@ -898,7 +974,7 @@ export default function RibaWarriorScore() {
                   )}
                 </div>
                 {/* Insurance */}
-                <div className="p-4 rounded bg-emerald-100/30">
+                <div className="p-4 rounded bg-emerald-100/30 dark:bg-emerald-900/30">
                   <Group
                     label="Do you have insurance (home, health, car, life)?"
                     group="ins"
@@ -908,7 +984,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                   {isYes("ins") && (
-                    <div className="mt-2 p-3 rounded border border-slate-300">
+                    <div className="mt-2 p-3 rounded border dark:border-slate-700">
                       <Group
                         label="Is any policy takaful (Islamic)?"
                         group="insTakaful"
@@ -919,7 +995,7 @@ export default function RibaWarriorScore() {
                       />
                       <input
                         placeholder="Optional monthly premium (£)"
-                        className="mt-2 w-full rounded border p-2 border-slate-300"
+                        className="mt-2 w-full rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
                         value={sel["insAmt"] ?? ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setChoice("insAmt", e.target.value)
@@ -929,7 +1005,7 @@ export default function RibaWarriorScore() {
                   )}
                 </div>
                 {/* Savings */}
-                <div className="p-4 rounded bg-emerald-50/40">
+                <div className="p-4 rounded bg-emerald-50/40 dark:bg-emerald-900/20">
                   <Group
                     label="Do you have a savings account that generates interest?"
                     group="sav"
@@ -939,7 +1015,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                   {isYes("sav") && (
-                    <div className="mt-2 p-3 rounded border border-slate-300">
+                    <div className="mt-2 p-3 rounded border dark:border-slate-700">
                       <Group
                         label="Do you know how to cleanse/dispose of the interest?"
                         group="savCleanse"
@@ -950,7 +1026,7 @@ export default function RibaWarriorScore() {
                       />
                       <input
                         placeholder="Optional average balance (£)"
-                        className="mt-2 w-full rounded border p-2 border-slate-300"
+                        className="mt-2 w-full rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
                         value={sel["savAmt"] ?? ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setChoice("savAmt", e.target.value)
@@ -987,13 +1063,13 @@ export default function RibaWarriorScore() {
 
           {/* STAGE 3 */}
           {stage === 3 && (
-            <div className="card p-6 bg-white">
+            <div className="card p-6 bg-white dark:bg-slate-800">
               <h3 className="text-xl font-bold mb-4">
                 Block 3 — Self‑inflicted (Debt & Credit)
               </h3>
               <div className="space-y-4">
                 {/* Student */}
-                <div className="p-4 rounded bg-emerald-50/40">
+                <div className="p-4 rounded bg-emerald-50/40 dark:bg-emerald-900/20">
                   <Group
                     label="Do you have a student loan?"
                     group="stud"
@@ -1003,7 +1079,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                   {isYes("stud") && (
-                    <div className="mt-2 p-3 rounded border border-slate-300">
+                    <div className="mt-2 p-3 rounded border dark:border-slate-700">
                       <Group
                         label="Is it interest‑based?"
                         group="studInterest"
@@ -1014,7 +1090,7 @@ export default function RibaWarriorScore() {
                       />
                       <input
                         placeholder="Optional balance (£)"
-                        className="mt-2 w-full rounded border p-2 border-slate-300"
+                        className="mt-2 w-full rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
                         value={sel["studAmt"] ?? ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setChoice("studAmt", e.target.value)
@@ -1025,7 +1101,7 @@ export default function RibaWarriorScore() {
                 </div>
 
                 {/* Mortgage */}
-                <div className="p-4 rounded bg-emerald-100/30">
+                <div className="p-4 rounded bg-emerald-100/30 dark:bg-emerald-900/30">
                   <Group
                     label="Do you currently have a mortgage?"
                     group="mort"
@@ -1035,7 +1111,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                   {isYes("mort") && (
-                    <div className="mt-2 p-3 rounded border border-slate-300 space-y-2">
+                    <div className="mt-2 p-3 rounded border dark:border-slate-700 space-y-2">
                       <Group
                         label="Is it Islamic (Sharia‑compliant)?"
                         group="mortIslamic"
@@ -1054,7 +1130,7 @@ export default function RibaWarriorScore() {
                       />
                       <input
                         placeholder="Optional outstanding balance (£)"
-                        className="w-full rounded border p-2 border-slate-300"
+                        className="w-full rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
                         value={sel["mortAmt"] ?? ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setChoice("mortAmt", e.target.value)
@@ -1065,7 +1141,7 @@ export default function RibaWarriorScore() {
                 </div>
 
                 {/* Personal loan */}
-                <div className="p-4 rounded bg-emerald-50/40">
+                <div className="p-4 rounded bg-emerald-50/40 dark:bg-emerald-900/20">
                   <Group
                     label="Do you have a personal loan?"
                     group="pl"
@@ -1075,7 +1151,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                   {isYes("pl") && (
-                    <div className="mt-2 p-3 rounded border border-slate-300">
+                    <div className="mt-2 p-3 rounded border dark:border-slate-700">
                       <Group
                         label="Is it interest‑free or Islamic?"
                         group="plType"
@@ -1087,7 +1163,7 @@ export default function RibaWarriorScore() {
                       />
                       <input
                         placeholder="Optional balance (£)"
-                        className="mt-2 w-full rounded border p-2 border-slate-300"
+                        className="mt-2 w-full rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
                         value={sel["plAmt"] ?? ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setChoice("plAmt", e.target.value)
@@ -1098,7 +1174,7 @@ export default function RibaWarriorScore() {
                 </div>
 
                 {/* Credit card */}
-                <div className="p-4 rounded bg-emerald-100/30">
+                <div className="p-4 rounded bg-emerald-100/30 dark:bg-emerald-900/30">
                   <Group
                     label="Do you have a credit card?"
                     group="cc"
@@ -1108,7 +1184,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                   {isYes("cc") && (
-                    <div className="mt-2 p-3 rounded border border-slate-300">
+                    <div className="mt-2 p-3 rounded border dark:border-slate-700">
                       <Group
                         label="Do you always pay the full balance before interest?"
                         group="ccPayFull"
@@ -1119,7 +1195,7 @@ export default function RibaWarriorScore() {
                       />
                       <input
                         placeholder="Optional current balance (£)"
-                        className="mt-2 w-full rounded border p-2 border-slate-300"
+                        className="mt-2 w-full rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
                         value={sel["ccAmt"] ?? ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setChoice("ccAmt", e.target.value)
@@ -1130,7 +1206,7 @@ export default function RibaWarriorScore() {
                 </div>
 
                 {/* Car finance */}
-                <div className="p-4 rounded bg-emerald-50/40">
+                <div className="p-4 rounded bg-emerald-50/40 dark:bg-emerald-900/20">
                   <Group
                     label="Car finance / lease?"
                     group="car"
@@ -1140,7 +1216,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                   {isYes("car") && (
-                    <div className="mt-2 p-3 rounded border border-slate-300">
+                    <div className="mt-2 p-3 rounded border dark:border-slate-700">
                       <Group
                         label="Is it Sharia‑compliant?"
                         group="carIslamic"
@@ -1151,7 +1227,7 @@ export default function RibaWarriorScore() {
                       />
                       <input
                         placeholder="Optional outstanding (£)"
-                        className="mt-2 w-full rounded border p-2 border-slate-300"
+                        className="mt-2 w-full rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
                         value={sel["carAmt"] ?? ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setChoice("carAmt", e.target.value)
@@ -1162,7 +1238,7 @@ export default function RibaWarriorScore() {
                 </div>
 
                 {/* Overdraft */}
-                <div className="p-4 rounded bg-emerald-100/30">
+                <div className="p-4 rounded bg-emerald-100/30 dark:bg-emerald-900/30">
                   <Group
                     label="Overdraft used with interest/charges in last 12 months?"
                     group="od"
@@ -1174,7 +1250,7 @@ export default function RibaWarriorScore() {
                 </div>
 
                 {/* BNPL */}
-                <div className="p-4 rounded bg-emerald-50/40">
+                <div className="p-4 rounded bg-emerald-50/40 dark:bg-emerald-900/20">
                   <Group
                     label="Buy Now, Pay Later (any late fees/interest)?"
                     group="bnpl"
@@ -1186,7 +1262,7 @@ export default function RibaWarriorScore() {
                 </div>
 
                 {/* Missed payments */}
-                <div className="p-4 rounded bg-emerald-100/30">
+                <div className="p-4 rounded bg-emerald-100/30 dark:bg-emerald-900/30">
                   <Group
                     label="Missed payments in last 24 months?"
                     group="missed"
@@ -1225,13 +1301,13 @@ export default function RibaWarriorScore() {
 
           {/* STAGE 4 */}
           {stage === 4 && (
-            <div className="card p-6 bg-white">
+            <div className="card p-6 bg-white dark:bg-slate-800">
               <h3 className="text-xl font-bold mb-4">
                 Block 4 — Personal Investments
               </h3>
               <div className="space-y-4">
                 {/* Stocks */}
-                <div className="p-4 rounded bg-emerald-50/40">
+                <div className="p-4 rounded bg-emerald-50/40 dark:bg-emerald-900/20">
                   <Group
                     label="Stocks / funds?"
                     group="stocks"
@@ -1241,7 +1317,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                   {isYes("stocks") && (
-                    <div className="mt-2 p-3 rounded border border-slate-300">
+                    <div className="mt-2 p-3 rounded border dark:border-slate-700">
                       <Group
                         label="Sharia‑compliant funds?"
                         group="stocksSharia"
@@ -1252,7 +1328,7 @@ export default function RibaWarriorScore() {
                       />
                       <input
                         placeholder="Optional value (£)"
-                        className="mt-2 w-full rounded border p-2 border-slate-300"
+                        className="mt-2 w-full rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
                         value={sel["stocksAmt"] ?? ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setChoice("stocksAmt", e.target.value)
@@ -1263,7 +1339,7 @@ export default function RibaWarriorScore() {
                 </div>
 
                 {/* Bonds */}
-                <div className="p-4 rounded bg-emerald-100/30">
+                <div className="p-4 rounded bg-emerald-100/30 dark:bg-emerald-900/30">
                   <Group
                     label="Bonds / fixed‑income?"
                     group="bonds"
@@ -1273,7 +1349,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                   {isYes("bonds") && (
-                    <div className="mt-2 p-3 rounded border border-slate-300">
+                    <div className="mt-2 p-3 rounded border dark:border-slate-700">
                       <Group
                         label="Sukuk (Islamic) vs conventional?"
                         group="bondsType"
@@ -1284,7 +1360,7 @@ export default function RibaWarriorScore() {
                       />
                       <input
                         placeholder="Optional value (£)"
-                        className="mt-2 w-full rounded border p-2 border-slate-300"
+                        className="mt-2 w-full rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
                         value={sel["bondsAmt"] ?? ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setChoice("bondsAmt", e.target.value)
@@ -1295,7 +1371,7 @@ export default function RibaWarriorScore() {
                 </div>
 
                 {/* Real estate */}
-                <div className="p-4 rounded bg-emerald-50/40">
+                <div className="p-4 rounded bg-emerald-50/40 dark:bg-emerald-900/20">
                   <Group
                     label="Real estate investing?"
                     group="reit"
@@ -1305,7 +1381,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                   {isYes("reit") && (
-                    <div className="mt-2 p-3 rounded border border-slate-300">
+                    <div className="mt-2 p-3 rounded border dark:border-slate-700">
                       <Group
                         label="Direct ownership or debt‑heavy (e.g., REITs)?"
                         group="reitType"
@@ -1316,7 +1392,7 @@ export default function RibaWarriorScore() {
                       />
                       <input
                         placeholder="Optional value (£)"
-                        className="mt-2 w-full rounded border p-2 border-slate-300"
+                        className="mt-2 w-full rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
                         value={sel["reitAmt"] ?? ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setChoice("reitAmt", e.target.value)
@@ -1327,7 +1403,7 @@ export default function RibaWarriorScore() {
                 </div>
 
                 {/* Crypto */}
-                <div className="p-4 rounded bg-emerald-100/30">
+                <div className="p-4 rounded bg-emerald-100/30 dark:bg-emerald-900/30">
                   <Group
                     label="Crypto assets?"
                     group="crypto"
@@ -1337,7 +1413,7 @@ export default function RibaWarriorScore() {
                     ]}
                   />
                   {isYes("crypto") && (
-                    <div className="mt-2 p-3 rounded border border-slate-300 space-y-2">
+                    <div className="mt-2 p-3 rounded border dark:border-slate-700 space-y-2">
                       <Group
                         label="Core (BTC, ETH, XRP)?"
                         group="cryptoCore"
@@ -1356,7 +1432,7 @@ export default function RibaWarriorScore() {
                       />
                       <input
                         placeholder="Optional value (£)"
-                        className="w-full rounded border p-2 border-slate-300"
+                        className="w-full rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
                         value={sel["cryptoAmt"] ?? ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setChoice("cryptoAmt", e.target.value)
@@ -1396,16 +1472,24 @@ export default function RibaWarriorScore() {
 
       {/* RESULTS */}
       {view === "results" && results && (
-        <section id="results" className="max-w-5xl mx-auto px-4 pb-24">
-          <div className="grid lg:grid-cols-2 gap-6">
-            <div className="card p-6 bg-white">
+        <section
+          id="results"
+          className="w-full max-w-6xl mx-auto px-2 sm:px-4 pb-24"
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="w-full card p-4 sm:p-6 bg-white dark:bg-slate-800">
               <h2 className="text-2xl font-extrabold mb-2">Your Results</h2>
-              <canvas ref={resultRef} width={420} height={260} />
-              <div className="mt-3 flex items-center justify-between">
-                <div className="">
+              <canvas
+                ref={resultRef}
+                width={420}
+                height={260}
+                className="w-full "
+              />
+              <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-3xl font-black">{results.score}</span>
                   <span
-                    className="ml-2 rounded-full px-2 py-0.5 text-[0.85rem] font-semibold"
+                    className="rounded-full px-2 py-0.5 text-[0.85rem] font-semibold whitespace-nowrap"
                     style={{
                       background: bandInfo(results.score).color,
                       color:
@@ -1417,17 +1501,17 @@ export default function RibaWarriorScore() {
                     {bandInfo(results.score).name}
                   </span>
                 </div>
-                <div className="ml-2 rounded-full py-0.5 text-[0.85rem] font-semibold bg-teal-700 px-5 shadow border-slate-300">
-                  <span
+                <div className="rounded-full py-1 text-[0.85rem] font-semibold bg-teal-700 px-5 shadow border-slate-300 dark:border-slate-700 w-fit">
+                  <button
                     onClick={resetTest}
-                    className="cursor-pointer text-xl font-black"
+                    className="cursor-pointer text-xl font-black focus:outline-none"
                   >
                     Reset
-                  </span>
+                  </button>
                 </div>
               </div>
             </div>
-            <div className="card p-6 bg-white">
+            <div className="card p-4 sm:p-6 bg-white dark:bg-slate-800">
               <h2 className="text-2xl font-extrabold mb-2">AI Advice</h2>
               <p className="text-sm mb-3 opacity-80">
                 Largest impact on your score: {adviceBundle?.largest}
@@ -1441,7 +1525,7 @@ export default function RibaWarriorScore() {
           </div>
 
           {/* Share Image + CSV */}
-          <div className="card p-6 bg-white mt-6">
+          <div className="card p-4 sm:p-6 bg-white dark:bg-slate-800 mt-6">
             <h3 className="text-xl font-bold mb-2">Download Share Image</h3>
             <p className="text-sm opacity-80 mb-3">
               Your image will show the donut with your number inside and the
@@ -1457,7 +1541,7 @@ export default function RibaWarriorScore() {
               </button>
               <button
                 onClick={downloadCsv}
-                className="cursor-pointer px-4 py-2 rounded bg-slate-200 font-semibold"
+                className="cursor-pointer px-4 py-2 rounded bg-slate-200 dark:bg-slate-800 font-semibold"
               >
                 Download CSV
               </button>
@@ -1465,7 +1549,7 @@ export default function RibaWarriorScore() {
           </div>
 
           {/* Encourage sharing */}
-          <div className="card p-6 bg-white mt-6">
+          <div className="card p-4 sm:p-6 bg-white dark:bg-slate-800 mt-6">
             <h3 className="text-xl font-bold mb-2">Spread the word</h3>
             <p className="text-sm opacity-80 mb-3">
               Save your dashboard image and share it on your social channels
@@ -1478,7 +1562,7 @@ export default function RibaWarriorScore() {
                 )}&url=${pageUrl}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3 py-2 rounded bg-slate-200"
+                className="px-3 py-2 rounded bg-slate-200 dark:bg-slate-700"
               >
                 X / Twitter
               </a>
@@ -1496,7 +1580,7 @@ export default function RibaWarriorScore() {
                 )}%20${pageUrl}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3 py-2 rounded bg-slate-200"
+                className="px-3 py-2 rounded bg-slate-200 dark:bg-slate-700"
               >
                 WhatsApp
               </a>
@@ -1509,14 +1593,18 @@ export default function RibaWarriorScore() {
                 Facebook
               </a>
             </div>
-            <div className="mt-4">
+
+            
+            {/* sent email to user  */}
+
+            {/* <div className="mt-4">
               <h4 className="font-bold mb-1">Email your CSV</h4>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   value={emailTo}
                   onChange={(e) => setEmailTo(e.target.value)}
                   placeholder="you@domain.com"
-                  className="flex-1 rounded border p-2 border-slate-300"
+                  className="flex-1 rounded border p-2 dark:bg-slate-900 dark:border-slate-700"
                 />
                 <button
                   onClick={emailCsv}
@@ -1526,7 +1614,7 @@ export default function RibaWarriorScore() {
                 </button>
               </div>
               <p className="text-sm mt-2 opacity-80">{emailMsg}</p>
-            </div>
+            </div> */}
           </div>
         </section>
       )}
@@ -1539,12 +1627,12 @@ export default function RibaWarriorScore() {
             onClick={() => setShowHow(false)}
           />
           <div className="absolute inset-0 grid place-items-center p-4">
-            <div className="card max-w-2xl w-full bg-white p-6">
+            <div className="card max-w-2xl w-full bg-white dark:bg-slate-800 p-6">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-extrabold">How it works</h2>
                 <button
                   onClick={() => setShowHow(false)}
-                  className="px-3 py-1 rounded bg-slate-200"
+                  className="px-3 py-1 rounded bg-slate-200 dark:bg-slate-700"
                 >
                   Close
                 </button>
@@ -1604,12 +1692,12 @@ export default function RibaWarriorScore() {
             onClick={() => setShowPrivacy(false)}
           />
           <div className="absolute inset-0 grid place-items-center p-4">
-            <div className="card max-w-2xl w-full bg-white p-6">
+            <div className="card max-w-2xl w-full bg-white dark:bg-slate-800 p-6">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-extrabold">Privacy</h2>
                 <button
                   onClick={() => setShowPrivacy(false)}
-                  className="px-3 py-1 rounded bg-slate-200"
+                  className="px-3 py-1 rounded bg-slate-200 dark:bg-slate-700"
                 >
                   Close
                 </button>
