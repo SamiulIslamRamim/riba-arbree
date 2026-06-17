@@ -3,7 +3,9 @@ import { Selection, ViewType } from "@/types";
 import Head from "next/head";
 import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import bgImg from "@/lib/fBG.png";
+import bgImg from "@/lib/lightMain.jpg";
+import bgImg2 from "@/lib/darkMain.jpg"
+import Llogo from "@/lib/logoLight.png"
 import { Menu, X } from "lucide-react";
 import { ThemeToggleSwitch } from "./toggleSwitch";
 
@@ -72,7 +74,7 @@ export default function RibaWarriorScore() {
       "800 64px Manrope, system-ui, font-jakarta, font-extrabold, leading-none text-bgdrop";
     ctx.fillStyle = "#308865";
     ctx.fillText("1000", cx, cy - 24);
-    ctx.fillStyle = "#0f172a";
+    ctx.fillStyle = dark ? "#e2e8f0" : "#0f172a"; 
     ctx.font = "700 36px Inter, system-ui, font-jakarta";
     ctx.fillText("RibaWarrior", cx, cy + 34);
   };
@@ -396,6 +398,7 @@ export default function RibaWarriorScore() {
     a.download = "riba_score_responses.csv";
     a.click();
     URL.revokeObjectURL(url);
+    console.log(csv)
   };
 
   // --- email CSV (backend required) ---
@@ -574,11 +577,19 @@ export default function RibaWarriorScore() {
             <Image
               src="https://i.ibb.co/TqgPvv97/cropped-RFF-01-1.png"
               alt="Riba Free Foundation"
-              className="h-10 w-auto"
+              className="h-10 w-auto dark:hidden"
+              width={80}
+              height={40}
+            />
+            <Image
+              src={Llogo}
+              alt="Riba Free Foundation"
+              className="h-10 w-auto hidden dark:block"
               width={80}
               height={40}
             />
           </a>
+          
           <nav className="hidden md:flex items-center gap-4 md:gap-10 lg:gap-15">
             <button
               onClick={() => setShowHow(true)}
@@ -656,7 +667,12 @@ export default function RibaWarriorScore() {
             <Image
               src={bgImg}
               alt="BackgroundImg"
-              className="absolute top-0 left-0 object-cover w-full h-[666px]"
+              className="absolute top-0 left-0 object-cover w-full h-[666px] dark:hidden"
+            />
+            <Image
+              src={bgImg2}
+              alt="BackgroundImg"
+              className="absolute top-0 left-0 object-cover w-full h-[666px] hidden dark:block "
             />
             <section
               id="home"
@@ -664,18 +680,18 @@ export default function RibaWarriorScore() {
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-50 items-center z-5 font-jakarta ">
                 <div className="lg:min-w-120">
-                  <h1 className="text-3xl  md:text-5xl font-extrabold tracking-tight text-black">
+                  <h1 className="text-3xl  md:text-5xl font-extrabold tracking-tight ">
                     Understand your{" "}
                     <span className="text-emerald-600 ">Riba Warrior</span>{" "}
                     Score
                   </h1>
-                  <p className="mt-4 text-sm md:text-lg opacity-80 text-black">
+                  <p className="mt-4 text-sm md:text-lg opacity-80 ">
                     See your exposure today, learn what it means, and get
                     practical steps to reduce it — in{" "}
                     <span className="text-emerald-600 ">3 minutes</span>, 4
                     simple blocks, no email required.
                   </p>
-                  <p className="mt-3 text-sm md:text-lg opacity-70 text-black">
+                  <p className="mt-3 text-sm md:text-lg opacity-70 ">
                     Designed with compassion. Mostly Yes/No questions. Optional
                     amounts never affect your score.
                   </p>
@@ -691,7 +707,7 @@ export default function RibaWarriorScore() {
                     </button>
                     <button
                       onClick={() => setShowHow(true)}
-                      className="px-5 py-1.5 rounded-lg border border-slate-700 font-semibold text-black"
+                      className="px-5 py-1.5 rounded-lg border border-slate-700 font-semibold "
                     >
                       How it works
                     </button>
@@ -1475,7 +1491,7 @@ export default function RibaWarriorScore() {
       {view === "results" && results && (
         <section
           id="results"
-          className="w-full max-w-6xl mx-auto px-2 sm:px-4 pb-24"
+          className="w-full max-w-6xl mx-auto px-2 sm:px-4 pb-24 font-jakarta"
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="w-full card p-4 sm:p-6 bg-white dark:bg-slate-800">
@@ -1509,6 +1525,7 @@ export default function RibaWarriorScore() {
                   >
                     Reset
                   </button>
+                  
                 </div>
               </div>
             </div>
