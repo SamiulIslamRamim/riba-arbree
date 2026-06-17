@@ -3,8 +3,8 @@ import { Selection, ViewType } from "@/types";
 import Head from "next/head";
 import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import bgImg from "@/lib/lightMain.jpg";
-import bgImg2 from "@/lib/darkMain.jpg"
+import bgImg from "@/lib/lightMain.png";
+import bgImg2 from "@/lib/darkMain.png"
 import Llogo from "@/lib/logoLight.png"
 import { Menu, X } from "lucide-react";
 import { ThemeToggleSwitch } from "./toggleSwitch";
