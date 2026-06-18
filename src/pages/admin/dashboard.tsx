@@ -1,39 +1,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { supabase } from "@/lib/supabaseClient";
-
-type User = Record<string, string | null>;
-
-const FIELDS = [
-  "name","email","gender","age_band","employment","household","country",
-  "pension","pension_sharia","pension_amt",
-  "ins","ins_takaful","ins_amt",
-  "sav","sav_cleanse","sav_amt",
-  "stud","stud_interest","stud_amt",
-  "mort","mort_islamic","mort_multi","mort_amt",
-  "pl","pl_type","pl_amt",
-  "cc","cc_pay_full","cc_amt",
-  "car","car_islamic","car_amt",
-  "od","bnpl","missed",
-  "stocks","stocks_sharia","stocks_amt",
-  "bonds","bonds_type","bonds_amt",
-  "reit","reit_type","reit_amt",
-  "crypto","crypto_core","crypto_risk","crypto_amt",
-];
+import { FIELDS } from "@/lib/adminConstants";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [authed, setAuthed] = useState(false);
 
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<User>({});
-  const [search, setSearch] = useState("");
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [toast, setToast] = useState("");
-
-  // Auth guard
   useEffect(() => {
     if (localStorage.getItem("admin_authed") !== "true") {
       router.replace("/admin/login");
@@ -42,77 +15,31 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 3000);
-  };
+  const {
+    users, loading, editingId, editData, setEditData,
+    search, setSearch, deleteConfirm, setDeleteConfirm, toast,
+    fetchUsers, handleDelete, handleEdit, handleSave, filtered, setEditingId 
+  } = useAdminUsers();
+
+  useEffect(() => {
+    if (authed) fetchUsers();
+  }, [authed]);
 
   const handleSignOut = () => {
     localStorage.removeItem("admin_authed");
     router.push("/admin/login");
   };
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (!error && data) setUsers(data);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    if (authed) fetchUsers();
-  }, [authed]);
-
-  const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("users").delete().eq("id", id);
-    if (!error) {
-      setUsers((prev) => prev.filter((u) => u.id !== id));
-      showToast("User deleted.");
-    }
-    setDeleteConfirm(null);
-  };
-
-  const handleEdit = (user: User) => {
-    setEditingId(user.id as string);
-    setEditData({ ...user });
-  };
-
-  const handleSave = async () => {
-    const { error } = await supabase
-      .from("users")
-      .update(editData)
-      .eq("id", editingId!);
-    if (!error) {
-      setUsers((prev) =>
-        prev.map((u) => (u.id === editingId ? { ...editData } : u))
-      );
-      showToast("User updated.");
-    }
-    setEditingId(null);
-  };
-
-  const filtered = users.filter(
-    (u) =>
-      (u.name ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      (u.email ?? "").toLowerCase().includes(search.toLowerCase())
-  );
-
-  // Prevent flash of dashboard before auth check completes
   if (!authed) return null;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-jakarta">
-      {/* Toast */}
       {toast && (
         <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-semibold">
           {toast}
         </div>
       )}
 
-      {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900 px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-extrabold text-white">Admin Panel</h1>
@@ -130,7 +57,6 @@ export default function AdminDashboard() {
       </header>
 
       <main className="p-6">
-        {/* Search + Refresh */}
         <div className="flex items-center gap-3 mb-5">
           <input
             type="text"
@@ -154,11 +80,7 @@ export default function AdminDashboard() {
         ) : (
           <div className="space-y-4">
             {filtered.map((user) => (
-              <div
-                key={user.id}
-                className="bg-slate-900 border border-slate-800 rounded-xl p-5"
-              >
-                {/* Row header */}
+              <div key={user.id} className="bg-slate-900 border border-slate-800 rounded-xl p-5">
                 <div className="flex flex-col md:flex-row items-start justify-between gap-2 mb-3">
                   <div>
                     <p className="font-bold text-white text-base">{user.name || "—"}</p>
@@ -170,51 +92,26 @@ export default function AdminDashboard() {
                   <div className="flex gap-2 shrink-0">
                     {editingId === user.id ? (
                       <>
-                        <button
-                          onClick={handleSave}
-                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="px-3 py-1.5 rounded-lg bg-slate-700 text-sm font-semibold"
-                        >
-                          Cancel
-                        </button>
+                        <button onClick={handleSave} className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">Save</button>
+                        <button onClick={() => setEditingId(null)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-sm font-semibold">Cancel</button>
                       </>
                     ) : (
                       <>
-                        <button
-                          onClick={() => handleEdit(user)}
-                          className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-semibold"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm(user.id as string)}
-                          className="px-3 py-1.5 rounded-lg bg-red-900 hover:bg-red-800 text-red-300 text-sm font-semibold"
-                        >
-                          Delete
-                        </button>
+                        <button onClick={() => handleEdit(user)} className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-semibold">Edit</button>
+                        <button onClick={() => setDeleteConfirm(user.id as string)} className="px-3 py-1.5 rounded-lg bg-red-900 hover:bg-red-800 text-red-300 text-sm font-semibold">Delete</button>
                       </>
                     )}
                   </div>
                 </div>
 
-                {/* Fields grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                   {FIELDS.filter((f) => f !== "name" && f !== "email").map((field) => (
                     <div key={field} className="bg-slate-800 rounded-lg p-2">
-                      <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">
-                        {field.replace(/_/g, " ")}
-                      </p>
+                      <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">{field.replace(/_/g, " ")}</p>
                       {editingId === user.id ? (
                         <input
                           value={editData[field] ?? ""}
-                          onChange={(e) =>
-                            setEditData((prev) => ({ ...prev, [field]: e.target.value }))
-                          }
+                          onChange={(e) => setEditData((prev) => ({ ...prev, [field]: e.target.value }))}
                           className="w-full bg-slate-700 rounded text-white text-xs p-1 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         />
                       ) : (
@@ -231,25 +128,14 @@ export default function AdminDashboard() {
         )}
       </main>
 
-      {/* Delete confirmation modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm w-full">
             <h3 className="text-lg font-bold text-white mb-2">Delete user?</h3>
             <p className="text-slate-400 text-sm mb-5">This action cannot be undone.</p>
             <div className="flex gap-3">
-              <button
-                onClick={() => handleDelete(deleteConfirm)}
-                className="flex-1 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold"
-              >
-                Yes, delete
-              </button>
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="flex-1 py-2.5 rounded-lg bg-slate-700 font-semibold"
-              >
-                Cancel
-              </button>
+              <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold">Yes, delete</button>
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 rounded-lg bg-slate-700 font-semibold">Cancel</button>
             </div>
           </div>
         </div>
