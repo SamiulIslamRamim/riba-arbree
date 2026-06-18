@@ -8,6 +8,7 @@ import bgImg2 from "@/lib/darkMain.png"
 import Llogo from "@/lib/logoLight.png"
 import { Menu, X } from "lucide-react";
 import { ThemeToggleSwitch } from "./toggleSwitch";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function RibaWarriorScore() {
   // --- UI routing ---
@@ -395,44 +396,127 @@ export default function RibaWarriorScore() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "riba_score_responses.csv";
+    a.download = `riba_score_responses_${allData().name.replace(/\s+/g, "_")}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     console.log(csv)
   };
 
   // --- email CSV (backend required) ---
-  const [emailTo, setEmailTo] = useState("");
+  // const [emailTo, setEmailTo] = useState("");
+  const emailTo= `samiramipuchut409@gmail.com`;
   const [emailMsg, setEmailMsg] = useState("");
-  const emailCsv = async () => {
-    const headers = Object.keys(allData());
-    const values = headers.map((k) =>
-      String((allData() as any)[k] ?? "").replace(/"/g, '""'),
+
+
+
+
+const saveToSupabase = async (data: ReturnType<typeof allData>) => {
+  const { error } = await supabase.from('users').upsert([{
+    name: data.name,
+    email: data.email,
+    gender: data.gender,
+    age_band: data.ageBand,
+    employment: data.employment,
+    household: data.household,
+    country: data.country,
+
+    pension: data.pension,
+    pension_sharia: data.pensionSharia,
+    pension_amt: data.pensionAmt,
+
+    ins: data.ins,
+    ins_takaful: data.insTakaful,
+    ins_amt: data.insAmt,
+
+    sav: data.sav,
+    sav_cleanse: data.savCleanse,
+    sav_amt: data.savAmt,
+
+    stud: data.stud,
+    stud_interest: data.studInterest,
+    stud_amt: data.studAmt,
+
+    mort: data.mort,
+    mort_islamic: data.mortIslamic,
+    mort_multi: data.mortMulti,
+    mort_amt: data.mortAmt,
+
+    pl: data.pl,
+    pl_type: data.plType,
+    pl_amt: data.plAmt,
+
+    cc: data.cc,
+    cc_pay_full: data.ccPayFull,
+    cc_amt: data.ccAmt,
+
+    car: data.car,
+    car_islamic: data.carIslamic,
+    car_amt: data.carAmt,
+
+    od: data.od,
+    bnpl: data.bnpl,
+    missed: data.missed,
+
+    stocks: data.stocks,
+    stocks_sharia: data.stocksSharia,
+    stocks_amt: data.stocksAmt,
+
+    bonds: data.bonds,
+    bonds_type: data.bondsType,
+    bonds_amt: data.bondsAmt,
+
+    reit: data.reit,
+    reit_type: data.reitType,
+    reit_amt: data.reitAmt,
+
+    crypto: data.crypto,
+    crypto_core: data.cryptoCore,
+    crypto_risk: data.cryptoRisk,
+    crypto_amt: data.cryptoAmt,
+  }], {
+    onConflict: 'email',        // if email exists, update the row
+    ignoreDuplicates: false,    // false = update, true = skip
+  });
+
+  if (error) {
+    console.error('Supabase insert error:', error);
+  } else {
+    console.log('User saved to Supabase ✓');
+  }
+};
+
+
+
+
+
+const emailCsv = async (data: ReturnType<typeof allData>) => {
+  const headers = Object.keys(data);
+  const values = headers.map((k) =>
+    String((data as any)[k] ?? "").replace(/"/g, '""'),
+  );
+  const csv =
+    headers.join(",") + "\n" + values.map((v) => `"${v}"`).join(",");
+  try {
+    const res = await fetch("/api/send-csv", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        csv,
+        filename: `riba_score_responses_${data.name.replace(/\s+/g, "_")}.csv`,
+      }),
+    });
+    setEmailMsg(
+      res.ok
+        ? "Email sent successfully."
+        : "Email failed — check server config.",
     );
-    const csv =
-      headers.join(",") + "\n" + values.map((v) => `"${v}"`).join(",");
-    try {
-      const res = await fetch("/api/send-csv", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: emailTo,
-          csv,
-          filename: "riba_score_responses.csv",
-        }),
-      });
-      setEmailMsg(
-        res.ok
-          ? "Email sent successfully."
-          : "Email failed — check server config.",
-      );
-    } catch (e) {
-      setEmailMsg("Network error sending email.");
-    }
-  };
+  } catch (e) {
+    setEmailMsg("Network error sending email.");
+  }
+};
 
   // --- collect all answers including optional amounts ---
-  const allData = () => ({
+  const  allData = () => ({
     gender: sel.gender,
     name: userName,
     email: userEmail,
@@ -495,7 +579,7 @@ export default function RibaWarriorScore() {
     cryptoRisk: sel.cryptoRisk,
     cryptoAmt: sel.cryptoAmt,
   });
-
+  const dta=allData;
   // --- simple modal primitives ---
   const [showHow, setShowHow] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -1470,13 +1554,14 @@ export default function RibaWarriorScore() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!validateStage(4))
-                      return alert(
-                        "Please answer all questions in this block.",
-                      );
-                    setView("results");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
+  if (!validateStage(4))
+    return alert("Please answer all questions in this block.");
+  const snapshot = allData(); // capture before state changes
+  setView("results");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  emailCsv(snapshot); // pass snapshot directly
+  saveToSupabase(snapshot);
+}}
                   className="px-5 py-3 rounded-lg bg-emerald-600 text-white font-semibold"
                 >
                   Finish
@@ -1748,3 +1833,6 @@ export default function RibaWarriorScore() {
     </div>
   );
 }
+
+
+
