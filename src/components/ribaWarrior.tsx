@@ -3,9 +3,9 @@ import { Selection, ViewType } from "@/types";
 import Head from "next/head";
 import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import bgImg from "@/lib/lightMain.png";
-import bgImg2 from "@/lib/darkMain.png"
-import Llogo from "@/lib/logoLight.png"
+import bgImg from "@/lib/images/lightMain.png";
+import bgImg2 from "@/lib/images/darkMain.png";
+import Llogo from "@/lib/images/logoLight.png";
 import { Menu, X } from "lucide-react";
 import { ThemeToggleSwitch } from "./toggleSwitch";
 import { supabase } from "@/lib/supabaseClient";
@@ -75,7 +75,7 @@ export default function RibaWarriorScore() {
       "800 64px Manrope, system-ui, font-jakarta, font-extrabold, leading-none text-bgdrop";
     ctx.fillStyle = "#308865";
     ctx.fillText("1000", cx, cy - 24);
-    ctx.fillStyle = dark ? "#e2e8f0" : "#0f172a"; 
+    ctx.fillStyle = dark ? "#e2e8f0" : "#0f172a";
     ctx.font = "700 36px Inter, system-ui, font-jakarta";
     ctx.fillText("RibaWarrior", cx, cy + 34);
   };
@@ -399,124 +399,122 @@ export default function RibaWarriorScore() {
     a.download = `riba_score_responses_${allData().name.replace(/\s+/g, "_")}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    console.log(csv)
+    console.log(csv);
   };
 
   // --- email CSV (backend required) ---
   // const [emailTo, setEmailTo] = useState("");
-  const emailTo= `samiramipuchut409@gmail.com`;
+  const emailTo = `samiramipuchut409@gmail.com`;
   const [emailMsg, setEmailMsg] = useState("");
 
+  const saveToSupabase = async (data: ReturnType<typeof allData>) => {
+    const { error } = await supabase.from("users").upsert(
+      [
+        {
+          name: data.name,
+          email: data.email,
+          gender: data.gender,
+          age_band: data.ageBand,
+          employment: data.employment,
+          household: data.household,
+          country: data.country,
 
+          pension: data.pension,
+          pension_sharia: data.pensionSharia,
+          pension_amt: data.pensionAmt,
 
+          ins: data.ins,
+          ins_takaful: data.insTakaful,
+          ins_amt: data.insAmt,
 
-const saveToSupabase = async (data: ReturnType<typeof allData>) => {
-  const { error } = await supabase.from('users').upsert([{
-    name: data.name,
-    email: data.email,
-    gender: data.gender,
-    age_band: data.ageBand,
-    employment: data.employment,
-    household: data.household,
-    country: data.country,
+          sav: data.sav,
+          sav_cleanse: data.savCleanse,
+          sav_amt: data.savAmt,
 
-    pension: data.pension,
-    pension_sharia: data.pensionSharia,
-    pension_amt: data.pensionAmt,
+          stud: data.stud,
+          stud_interest: data.studInterest,
+          stud_amt: data.studAmt,
 
-    ins: data.ins,
-    ins_takaful: data.insTakaful,
-    ins_amt: data.insAmt,
+          mort: data.mort,
+          mort_islamic: data.mortIslamic,
+          mort_multi: data.mortMulti,
+          mort_amt: data.mortAmt,
 
-    sav: data.sav,
-    sav_cleanse: data.savCleanse,
-    sav_amt: data.savAmt,
+          pl: data.pl,
+          pl_type: data.plType,
+          pl_amt: data.plAmt,
 
-    stud: data.stud,
-    stud_interest: data.studInterest,
-    stud_amt: data.studAmt,
+          cc: data.cc,
+          cc_pay_full: data.ccPayFull,
+          cc_amt: data.ccAmt,
 
-    mort: data.mort,
-    mort_islamic: data.mortIslamic,
-    mort_multi: data.mortMulti,
-    mort_amt: data.mortAmt,
+          car: data.car,
+          car_islamic: data.carIslamic,
+          car_amt: data.carAmt,
 
-    pl: data.pl,
-    pl_type: data.plType,
-    pl_amt: data.plAmt,
+          od: data.od,
+          bnpl: data.bnpl,
+          missed: data.missed,
 
-    cc: data.cc,
-    cc_pay_full: data.ccPayFull,
-    cc_amt: data.ccAmt,
+          stocks: data.stocks,
+          stocks_sharia: data.stocksSharia,
+          stocks_amt: data.stocksAmt,
 
-    car: data.car,
-    car_islamic: data.carIslamic,
-    car_amt: data.carAmt,
+          bonds: data.bonds,
+          bonds_type: data.bondsType,
+          bonds_amt: data.bondsAmt,
 
-    od: data.od,
-    bnpl: data.bnpl,
-    missed: data.missed,
+          reit: data.reit,
+          reit_type: data.reitType,
+          reit_amt: data.reitAmt,
 
-    stocks: data.stocks,
-    stocks_sharia: data.stocksSharia,
-    stocks_amt: data.stocksAmt,
-
-    bonds: data.bonds,
-    bonds_type: data.bondsType,
-    bonds_amt: data.bondsAmt,
-
-    reit: data.reit,
-    reit_type: data.reitType,
-    reit_amt: data.reitAmt,
-
-    crypto: data.crypto,
-    crypto_core: data.cryptoCore,
-    crypto_risk: data.cryptoRisk,
-    crypto_amt: data.cryptoAmt,
-  }], {
-    onConflict: 'email',        // if email exists, update the row
-    ignoreDuplicates: false,    // false = update, true = skip
-  });
-
-  if (error) {
-    console.error('Supabase insert error:', error);
-  } else {
-    console.log('User saved to Supabase ✓');
-  }
-};
-
-
-
-
-
-const emailCsv = async (data: ReturnType<typeof allData>) => {
-  const headers = Object.keys(data);
-  const values = headers.map((k) =>
-    String((data as any)[k] ?? "").replace(/"/g, '""'),
-  );
-  const csv =
-    headers.join(",") + "\n" + values.map((v) => `"${v}"`).join(",");
-  try {
-    const res = await fetch("/api/send-csv", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        csv,
-        filename: `riba_score_responses_${data.name.replace(/\s+/g, "_")}.csv`,
-      }),
-    });
-    setEmailMsg(
-      res.ok
-        ? "Email sent successfully."
-        : "Email failed — check server config.",
+          crypto: data.crypto,
+          crypto_core: data.cryptoCore,
+          crypto_risk: data.cryptoRisk,
+          crypto_amt: data.cryptoAmt,
+        },
+      ],
+      {
+        onConflict: "email", // if email exists, update the row
+        ignoreDuplicates: false, // false = update, true = skip
+      },
     );
-  } catch (e) {
-    setEmailMsg("Network error sending email.");
-  }
-};
+
+    if (error) {
+      console.error("Supabase insert error:", error);
+    } else {
+      console.log("User saved to Supabase ✓");
+    }
+  };
+
+  const emailCsv = async (data: ReturnType<typeof allData>) => {
+    const headers = Object.keys(data);
+    const values = headers.map((k) =>
+      String((data as any)[k] ?? "").replace(/"/g, '""'),
+    );
+    const csv =
+      headers.join(",") + "\n" + values.map((v) => `"${v}"`).join(",");
+    try {
+      const res = await fetch("/api/send-csv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          csv,
+          filename: `riba_score_responses_${data.name.replace(/\s+/g, "_")}.csv`,
+        }),
+      });
+      setEmailMsg(
+        res.ok
+          ? "Email sent successfully."
+          : "Email failed — check server config.",
+      );
+    } catch (e) {
+      setEmailMsg("Network error sending email.");
+    }
+  };
 
   // --- collect all answers including optional amounts ---
-  const  allData = () => ({
+  const allData = () => ({
     gender: sel.gender,
     name: userName,
     email: userEmail,
@@ -579,7 +577,7 @@ const emailCsv = async (data: ReturnType<typeof allData>) => {
     cryptoRisk: sel.cryptoRisk,
     cryptoAmt: sel.cryptoAmt,
   });
-  const dta=allData;
+  const dta = allData;
   // --- simple modal primitives ---
   const [showHow, setShowHow] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -673,7 +671,7 @@ const emailCsv = async (data: ReturnType<typeof allData>) => {
               height={40}
             />
           </a>
-          
+
           <nav className="hidden md:flex items-center gap-4 md:gap-10 lg:gap-15">
             <button
               onClick={() => setShowHow(true)}
@@ -781,7 +779,8 @@ const emailCsv = async (data: ReturnType<typeof allData>) => {
                   </p>
                   <div className="mt-6 flex gap-3">
                     <button
-                      onClick={() => { // Changed to preTest view
+                      onClick={() => {
+                        // Changed to preTest view
                         setView("preTest");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
@@ -858,15 +857,24 @@ const emailCsv = async (data: ReturnType<typeof allData>) => {
 
       {/* PRE-TEST VIEW */}
       {view === "preTest" && (
-        <section id="preTest" className="max-w-md mx-auto px-4 pb-24 pt-15 font-jakarta ">
+        <section
+          id="preTest"
+          className="max-w-md mx-auto px-4 pb-24 pt-15 font-jakarta "
+        >
           <div className="card p-6 bg-white dark:bg-slate-800">
-            <h2 className="text-2xl font-extrabold mb-4 text-center">RibaWarrior Test</h2>
+            <h2 className="text-2xl font-extrabold mb-4 text-center">
+              RibaWarrior Test
+            </h2>
             <p className="text-sm opacity-80 mb-4 text-center">
-              Help us understand you better so we can calculate your Riba exposure and guide you towards a Riba free life. 
+              Help us understand you better so we can calculate your Riba
+              exposure and guide you towards a Riba free life.
             </p>
             <div className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-semibold mb-1">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-semibold mb-1"
+                >
                   Full Name
                 </label>
                 <input
@@ -880,8 +888,11 @@ const emailCsv = async (data: ReturnType<typeof allData>) => {
                 />
               </div>
               <div>
-                <label htmlFor="email" className="block text-sm font-semibold mb-1">
-                  Email 
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-semibold mb-1"
+                >
+                  Email
                 </label>
                 <input
                   type="email"
@@ -896,7 +907,8 @@ const emailCsv = async (data: ReturnType<typeof allData>) => {
             </div>
             <div className="mt-10 flex justify-center">
               <button
-                onClick={() => { // Validate name and email before proceeding
+                onClick={() => {
+                  // Validate name and email before proceeding
                   if (!userName.trim() || !userEmail.trim()) {
                     alert("Please enter your full name and email to continue.");
                     return;
@@ -1554,14 +1566,16 @@ const emailCsv = async (data: ReturnType<typeof allData>) => {
                 <button
                   type="button"
                   onClick={() => {
-  if (!validateStage(4))
-    return alert("Please answer all questions in this block.");
-  const snapshot = allData(); // capture before state changes
-  setView("results");
-  window.scrollTo({ top: 0, behavior: "smooth" });
-  emailCsv(snapshot); // pass snapshot directly
-  saveToSupabase(snapshot);
-}}
+                    if (!validateStage(4))
+                      return alert(
+                        "Please answer all questions in this block.",
+                      );
+                    const snapshot = allData(); // capture before state changes
+                    setView("results");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    emailCsv(snapshot); // pass snapshot directly
+                    saveToSupabase(snapshot);
+                  }}
                   className="px-5 py-3 rounded-lg bg-emerald-600 text-white font-semibold"
                 >
                   Finish
@@ -1610,7 +1624,6 @@ const emailCsv = async (data: ReturnType<typeof allData>) => {
                   >
                     Reset
                   </button>
-                  
                 </div>
               </div>
             </div>
@@ -1697,7 +1710,6 @@ const emailCsv = async (data: ReturnType<typeof allData>) => {
               </a>
             </div>
 
-            
             {/* sent email to user  */}
 
             {/* <div className="mt-4">
@@ -1833,6 +1845,3 @@ const emailCsv = async (data: ReturnType<typeof allData>) => {
     </div>
   );
 }
-
-
-
